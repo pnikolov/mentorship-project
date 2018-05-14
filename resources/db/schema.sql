@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: 10 май 2018 в 10:34
+-- Generation Time: 13 май 2018 в 22:23
 -- Версия на сървъра: 10.1.31-MariaDB
 -- PHP Version: 7.2.3
 
@@ -30,16 +30,15 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `animals` (
   `id` int(10) UNSIGNED NOT NULL,
-  `type` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
-  `breed` int(10) UNSIGNED NOT NULL,
+  `type` enum('Dog','Cat') COLLATE utf8_unicode_ci NOT NULL,
+  `breed_id` int(10) UNSIGNED NOT NULL,
   `food` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `owner` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL COMMENT 'owner',
   `name` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `birth` date NOT NULL,
   `description` text COLLATE utf8_unicode_ci NOT NULL,
   `coloring` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
-  `traits` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
-  `qr_code` varchar(255) COLLATE utf8_unicode_ci NOT NULL
+  `traits` varchar(150) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -61,9 +60,9 @@ CREATE TABLE `breeds` (
 
 CREATE TABLE `checkups` (
   `id` int(10) UNSIGNED NOT NULL,
-  `animal` int(10) UNSIGNED NOT NULL,
-  `doctor` int(10) UNSIGNED NOT NULL,
-  `checkup_date` date NOT NULL,
+  `animal_id` int(10) UNSIGNED NOT NULL,
+  `doctor_id` int(10) UNSIGNED NOT NULL,
+  `date` date NOT NULL,
   `description` text COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -87,9 +86,9 @@ CREATE TABLE `clinics` (
 
 CREATE TABLE `diary` (
   `id` int(10) UNSIGNED NOT NULL,
+  `animal_id` int(10) UNSIGNED NOT NULL,
   `date` datetime NOT NULL,
-  `description` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
-  `animal` int(10) UNSIGNED NOT NULL
+  `description` varchar(255) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -101,7 +100,7 @@ CREATE TABLE `diary` (
 CREATE TABLE `doctors` (
   `id` int(10) UNSIGNED NOT NULL,
   `name` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
-  `clinic` int(10) UNSIGNED NOT NULL,
+  `clinic_id` int(10) UNSIGNED NOT NULL,
   `phone` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -113,10 +112,23 @@ CREATE TABLE `doctors` (
 
 CREATE TABLE `friendships` (
   `id` int(10) UNSIGNED NOT NULL,
-  `animal_one` int(10) UNSIGNED NOT NULL,
-  `animal_two` int(10) UNSIGNED NOT NULL,
+  `user_one_id` int(10) UNSIGNED NOT NULL,
+  `user_two_id` int(10) UNSIGNED NOT NULL,
   `approved` tinyint(1) NOT NULL DEFAULT '0',
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Структура на таблица `galleries`
+--
+
+CREATE TABLE `galleries` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `animal_id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -127,8 +139,9 @@ CREATE TABLE `friendships` (
 
 CREATE TABLE `images` (
   `id` int(10) UNSIGNED NOT NULL,
-  `animal_id` int(10) UNSIGNED NOT NULL,
-  `uri` varchar(255) COLLATE utf8_unicode_ci NOT NULL
+  `uri` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `imageable_id` int(10) UNSIGNED NOT NULL,
+  `imageabel_type` enum('Diary','Gallery') COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -155,8 +168,8 @@ CREATE TABLE `users` (
 --
 ALTER TABLE `animals`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `owner` (`owner`) USING BTREE,
-  ADD KEY `animals_breeds` (`breed`);
+  ADD KEY `owner` (`user_id`) USING BTREE,
+  ADD KEY `animals_breeds` (`breed_id`);
 
 --
 -- Indexes for table `breeds`
@@ -169,8 +182,8 @@ ALTER TABLE `breeds`
 --
 ALTER TABLE `checkups`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `animal` (`animal`),
-  ADD KEY `doctor` (`doctor`);
+  ADD KEY `animal` (`animal_id`),
+  ADD KEY `doctor` (`doctor_id`);
 
 --
 -- Indexes for table `clinics`
@@ -183,29 +196,36 @@ ALTER TABLE `clinics`
 --
 ALTER TABLE `diary`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `animal` (`animal`);
+  ADD KEY `animal_id` (`animal_id`);
 
 --
 -- Indexes for table `doctors`
 --
 ALTER TABLE `doctors`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `clinic` (`clinic`);
+  ADD KEY `clinic` (`clinic_id`);
 
 --
 -- Indexes for table `friendships`
 --
 ALTER TABLE `friendships`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `animal_one` (`animal_one`),
-  ADD UNIQUE KEY `animal_two` (`animal_two`);
+  ADD UNIQUE KEY `animal_one` (`user_one_id`),
+  ADD UNIQUE KEY `animal_two` (`user_two_id`);
+
+--
+-- Indexes for table `galleries`
+--
+ALTER TABLE `galleries`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `animal_id` (`animal_id`);
 
 --
 -- Indexes for table `images`
 --
 ALTER TABLE `images`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `animal_id` (`animal_id`);
+  ADD KEY `imageable_id` (`imageable_id`);
 
 --
 -- Indexes for table `users`
@@ -261,6 +281,12 @@ ALTER TABLE `friendships`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `galleries`
+--
+ALTER TABLE `galleries`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `images`
 --
 ALTER TABLE `images`
@@ -280,40 +306,47 @@ ALTER TABLE `users`
 -- Ограничения за таблица `animals`
 --
 ALTER TABLE `animals`
-  ADD CONSTRAINT `animals_breeds` FOREIGN KEY (`breed`) REFERENCES `breeds` (`id`),
-  ADD CONSTRAINT `animals_users` FOREIGN KEY (`owner`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `animals_breeds` FOREIGN KEY (`breed_id`) REFERENCES `breeds` (`id`),
+  ADD CONSTRAINT `animals_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Ограничения за таблица `checkups`
 --
 ALTER TABLE `checkups`
-  ADD CONSTRAINT `checkups_animal` FOREIGN KEY (`animal`) REFERENCES `animals` (`id`),
-  ADD CONSTRAINT `checkups_doctor` FOREIGN KEY (`doctor`) REFERENCES `doctors` (`id`);
+  ADD CONSTRAINT `checkups_animal` FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`),
+  ADD CONSTRAINT `checkups_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`);
 
 --
 -- Ограничения за таблица `diary`
 --
 ALTER TABLE `diary`
-  ADD CONSTRAINT `animal` FOREIGN KEY (`animal`) REFERENCES `animals` (`id`);
+  ADD CONSTRAINT `diary_animal_id` FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`);
 
 --
 -- Ограничения за таблица `doctors`
 --
 ALTER TABLE `doctors`
-  ADD CONSTRAINT `doctors_clinic` FOREIGN KEY (`clinic`) REFERENCES `clinics` (`id`);
+  ADD CONSTRAINT `doctors_clinic` FOREIGN KEY (`clinic_id`) REFERENCES `clinics` (`id`);
 
 --
 -- Ограничения за таблица `friendships`
 --
 ALTER TABLE `friendships`
-  ADD CONSTRAINT `animal_one` FOREIGN KEY (`animal_one`) REFERENCES `animals` (`id`),
-  ADD CONSTRAINT `animal_two` FOREIGN KEY (`animal_two`) REFERENCES `animals` (`id`);
+  ADD CONSTRAINT `friendships_users_one` FOREIGN KEY (`user_one_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `friendships_users_two` FOREIGN KEY (`user_two_id`) REFERENCES `users` (`id`);
+
+--
+-- Ограничения за таблица `galleries`
+--
+ALTER TABLE `galleries`
+  ADD CONSTRAINT `gallery_animal_id` FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`);
 
 --
 -- Ограничения за таблица `images`
 --
 ALTER TABLE `images`
-  ADD CONSTRAINT `animal_id` FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`);
+  ADD CONSTRAINT `diary_imageable_id` FOREIGN KEY (`imageable_id`) REFERENCES `diary` (`id`),
+  ADD CONSTRAINT `galleries_imageable_id` FOREIGN KEY (`imageable_id`) REFERENCES `galleries` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
